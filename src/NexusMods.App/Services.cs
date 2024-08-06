@@ -125,6 +125,11 @@ public static class Services
     
     private static IServiceCollection AddSupportedGames(this IServiceCollection services)
     {
+        if (experimentalSettings is { EnableAllGames: true })
+        {
+            Games.UnrealEngine.Services.AddUnrealEngineGames(services);
+        }
+        
         Games.RedEngine.Services.AddRedEngineGames(services);
         Games.StardewValley.Services.AddStardewValley(services);
         Games.Larian.BaldursGate3.Services.AddBaldursGate3(services);
