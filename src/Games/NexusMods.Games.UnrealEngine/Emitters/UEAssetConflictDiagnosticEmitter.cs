@@ -31,10 +31,8 @@ public class UEAssetConflictDiagnosticEmitter : ILoadoutDiagnosticEmitter
         Loadout.ReadOnly loadout,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await Task.Yield();
 
-        var ueassetRegex = Constants.UEObjectsRegex();
-
+        // TODO: returns game file instead of mod files
         var files = loadout.Items
             .GetEnabledLoadoutFiles()
             .Where(file =>
@@ -46,6 +44,10 @@ public class UEAssetConflictDiagnosticEmitter : ILoadoutDiagnosticEmitter
                 if(!Constants.ContentExts.Contains(relativePath.Extension)) return false;
                 return !loadoutItem.Parent.TryGetAsLoadoutGameFilesGroup(out _);
             });
+
+        if (!files.Any()) yield break;
+
+        var ueassetRegex = Constants.UEObjectsRegex();
 
         var fileTasks = await files.ToAsyncEnumerable()
         .Select(async file =>

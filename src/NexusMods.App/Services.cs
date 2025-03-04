@@ -127,16 +127,7 @@ public static class Services
     
     private static IServiceCollection AddSupportedGames(this IServiceCollection services)
     {
-        // TODO: ask how am i supposed to access experimentalSettings here the right way
-        var serviceProvider = services.BuildServiceProvider();
-        var settingsManager = serviceProvider.GetRequiredService<ISettingsManager>();
-        var experimentalSettings = settingsManager.Get<ExperimentalSettings>();
-
-        if (experimentalSettings is { EnableAllGames: true })
-        {
-            Games.UnrealEngine.Services.AddUnrealEngineGames(services);
-        }
-
+        Games.UnrealEngine.Services.AddUnrealEngineGames(services);
         Games.RedEngine.Services.AddRedEngineGames(services);
         Games.StardewValley.Services.AddStardewValley(services);
         Games.Larian.BaldursGate3.Services.AddBaldursGate3(services);

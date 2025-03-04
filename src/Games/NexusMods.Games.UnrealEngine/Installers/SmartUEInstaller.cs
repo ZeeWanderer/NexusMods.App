@@ -56,6 +56,7 @@ public class SmartUEInstaller : ALibraryArchiveInstaller
             return new NotSupported();
         }
 
+        // TODO: fails to find game file group
         var foundGameFilesGroup = LoadoutGameFilesGroup
             .FindByGameMetadata(loadout.Db, loadout.Installation.GameInstallMetadataId)
             .TryGetFirst(x => x.AsLoadoutItemGroup().AsLoadoutItem().LoadoutId == loadout.LoadoutId, out var gameFilesGroup);
