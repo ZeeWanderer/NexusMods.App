@@ -71,7 +71,7 @@ public class PacificDriveGame : AGame, ISteamGame, IEpicGame
 
     public override IDiagnosticEmitter[] DiagnosticEmitters =>
     [
-        _serviceProvider.GetRequiredService<UEAssetConflictDiagnosticEmitter>(),
+        //_serviceProvider.GetRequiredService<UEAssetConflictDiagnosticEmitter>(),
     ];
 
     public override List<IModInstallDestination> GetInstallDestinations(IReadOnlyDictionary<LocationId, AbsolutePath> locations)
