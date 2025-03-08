@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Logging;
 using NexusMods.Abstractions.GameLocators;
+using NexusMods.Abstractions.Games.FileHashes;
 using NexusMods.Abstractions.Library.Installers;
 using NexusMods.Abstractions.Library.Models;
 using NexusMods.Abstractions.Loadouts;
+using NexusMods.Abstractions.Loadouts.Extensions;
 using NexusMods.Abstractions.Loadouts.Files;
 using NexusMods.Extensions.BCL;
 using NexusMods.MnemonicDB.Abstractions;
@@ -21,10 +23,12 @@ namespace NexusMods.Games.UnrealEngine.Installers;
 public class SmartUEInstaller : ALibraryArchiveInstaller
 {
     private readonly IConnection _connection;
+    private readonly IFileHashesService _fileHashesService;
 
-    public SmartUEInstaller(ILogger<SmartUEInstaller> logger, IConnection connection, IServiceProvider serviceProvider) : base(serviceProvider, logger)
+    public SmartUEInstaller(ILogger<SmartUEInstaller> logger, IConnection connection, IServiceProvider serviceProvider, IFileHashesService fileHashesService) : base(serviceProvider, logger)
     {
         _connection = connection;
+        _fileHashesService = fileHashesService;
     }
 
     /// <summary>
@@ -56,21 +60,37 @@ public class SmartUEInstaller : ALibraryArchiveInstaller
             return new NotSupported();
         }
 
-        // TODO: fails to find game file group
-        var foundGameFilesGroup = LoadoutGameFilesGroup
-            .FindByGameMetadata(loadout.Db, loadout.Installation.GameInstallMetadataId)
-            .TryGetFirst(x => x.AsLoadoutItemGroup().AsLoadoutItem().LoadoutId == loadout.LoadoutId, out var gameFilesGroup);
+        var gameMetadataId = loadout.Installation.GameInstallMetadataId;
+        var gameMetadataId2 = loadout.InstallationInstance.GameMetadataId;
 
-        if (!foundGameFilesGroup)
-        {
-            Logger.LogError("Unable to find game files group!");
-            return new NotSupported();
-        }
-
-        var gameFilesLookup = gameFilesGroup.AsLoadoutItemGroup().Children
+        var gameFilesLookup = loadout.Items
+            .GetEnabledLoadoutFiles()
+            .Where(file =>
+            {
+                var loadoutItem = file.AsLoadoutItemWithTargetPath().AsLoadoutItem();
+                if (loadoutItem.ParentId == default(LoadoutItemGroupId)) return false;
+                return true;
+            })
+            .Select(file => file.AsLoadoutItemWithTargetPath().AsLoadoutItem())
             .Select(gameFile => gameFile.TryGetAsLoadoutItemWithTargetPath(out var targeted) ? (GamePath)targeted.TargetPath : default)
             .Where(x => x != default)
             .ToLookup(x => x.FileName);
+
+        // TODO: fails to find game file group
+        //var foundGameFilesGroup = LoadoutGameFilesGroup
+        //    .FindByGameMetadata(loadout.Db, gameMetadataId2)
+        //    .TryGetFirst(x => x.AsLoadoutItemGroup().AsLoadoutItem().LoadoutId == loadout.LoadoutId, out var gameFilesGroup);
+
+        //if (!foundGameFilesGroup)
+        //{
+        //    Logger.LogError("Unable to find game files group!");
+        //    return new NotSupported();
+        //}
+
+        //var gameFilesLookup = gameFilesGroup.AsLoadoutItemGroup().Children
+        //    .Select(gameFile => gameFile.TryGetAsLoadoutItemWithTargetPath(out var targeted) ? (GamePath)targeted.TargetPath : default)
+        //    .Where(x => x != default)
+        //    .ToLookup(x => x.FileName);
 
         var modFiles = achiveFiles.Select(kv =>
         {
